@@ -3,108 +3,55 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Sainiwalaa | Add Product</title>
+    <title>Manage | Sainiwalaa</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" rel="stylesheet" />
-    <style>
-        body { background: #f0f2f5; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
-        .form-card { background: white; border-radius: 20px; box-shadow: 0 10px 25px rgba(0,0,0,0.05); }
-        input, select, textarea { border: 1px solid #ddd !important; border-radius: 8px !important; padding: 12px !important; width: 100%; margin-top: 5px; }
-        label { font-weight: 600; font-size: 14px; color: #444; margin-top: 15px; display: block; }
-        .upload-box { border: 2px dashed #0095f6; border-radius: 12px; padding: 20px; text-align: center; cursor: pointer; transition: 0.3s; }
-        .upload-box:hover { background: #eef8ff; }
-    </style>
 </head>
-<body class="p-4">
-
-    <div class="max-w-xl mx-auto mt-6">
-        <div class="form-card p-8">
-            <h1 class="text-2xl font-bold text-gray-800">List Your Product on Blog</h1>
-            <p class="text-gray-500 text-sm mb-6">Fill the details below to grow your product reach.</p>
-
-            <form id="productForm">
-                <label>Influencer Name</label>
-                <input type="text" id="influencerName" placeholder="Your Name" required>
-
-                <label>Instagram ID</label>
-                <input type="text" id="influencerInsta" placeholder="@username" required>
-
-                <label>Product Identity (Name)</label>
-                <input type="text" id="productName" placeholder="What is this product?" required>
-
-                <label>Media URL (Video Link)</label>
-                <input type="url" id="mediaUrl" placeholder="Paste Firebase or Direct Video Link" required>
-                <p class="text-[10px] text-blue-500 mt-1">*Upload video to Firebase Storage and paste the 'Download URL' here.</p>
-
-                <label>About Product</label>
-                <textarea id="description" rows="3" placeholder="Brief details about product..."></textarea>
-
-                <div class="grid grid-cols-2 gap-4">
-                    <div>
-                        <label>Price (₹)</label>
-                        <input type="number" id="price" placeholder="599" required>
-                    </div>
-                    <div>
-                        <label>Platform</label>
-                        <select id="platform">
-                            <option value="Amazon">Amazon</option>
-                            <option value="Meesho">Meesho</option>
-                            <option value="Flipkart">Flipkart</option>
-                            <option value="Myntra">Myntra</option>
-                            <option value="Other">Other</option>
-                        </select>
-                    </div>
-                </div>
-
-                <label>Buy Link</label>
-                <input type="url" id="buyLink" placeholder="https://..." required>
-
-                <button type="submit" id="submitBtn" class="w-full bg-blue-600 text-white font-bold py-4 rounded-xl mt-8 hover:bg-blue-700 transition shadow-lg shadow-blue-200 uppercase tracking-widest">
-                    SEND TO BLOG FEED
-                </button>
-            </form>
+<body class="bg-gray-100 p-4">
+    <div class="max-w-xl mx-auto bg-white p-6 rounded-3xl shadow-lg">
+        <h2 class="text-xl font-bold mb-4">Add New Product</h2>
+        <div class="space-y-3">
+            <input type="text" id="infName" placeholder="Influencer Name" class="w-full p-3 border rounded-xl">
+            <input type="text" id="pName" placeholder="Product Name" class="w-full p-3 border rounded-xl">
+            <input type="text" id="mUrl" placeholder="Video URL (.mp4)" class="w-full p-3 border rounded-xl">
+            <input type="number" id="prc" placeholder="Price (₹)" class="w-full p-3 border rounded-xl">
+            <input type="text" id="lnk" placeholder="Buy Link" class="w-full p-3 border rounded-xl">
+            <button onclick="add()" class="w-full bg-blue-600 text-white p-4 rounded-xl font-bold">SEND TO FEED</button>
         </div>
+        <hr class="my-6">
+        <h2 class="font-bold mb-4">Manage Posts</h2>
+        <div id="items" class="space-y-3"></div>
     </div>
 
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-database-compat.js"></script>
-
     <script>
-        const firebaseConfig = { 
-            apiKey: "AIzaSyCm-5fJ49MxP0MFT8dDIkptue15x_GaaYc", 
-            databaseURL: "https://sainiwalaainfulencer-default-rtdb.firebaseio.com" 
-        };
+        const firebaseConfig = { apiKey: "AIzaSyCm-5fJ49MxP0MFT8dDIkptue15x_GaaYc", databaseURL: "https://sainiwalaainfulencer-default-rtdb.firebaseio.com" };
         firebase.initializeApp(firebaseConfig);
         const db = firebase.database();
+        firebase.auth().onAuthStateChanged(user => { if(!user) location.href="auth.html"; });
 
-        document.getElementById('productForm').addEventListener('submit', function(e) {
-            e.preventDefault();
-            const btn = document.getElementById('submitBtn');
-            btn.innerText = "UPDATING FEED...";
-            btn.disabled = true;
-
-            const newPost = {
-                influencerName: document.getElementById('influencerName').value,
-                influencerInsta: document.getElementById('influencerInsta').value,
-                productName: document.getElementById('productName').value,
-                mediaUrl: document.getElementById('mediaUrl').value,
-                description: document.getElementById('description').value,
-                price: document.getElementById('price').value,
-                platform: document.getElementById('platform').value,
-                buyLink: document.getElementById('buyLink').value,
-                timestamp: Date.now()
+        function add() {
+            const data = {
+                influencerName: document.getElementById('infName').value,
+                productName: document.getElementById('pName').value,
+                mediaUrl: document.getElementById('mUrl').value,
+                price: document.getElementById('prc').value,
+                buyLink: document.getElementById('lnk').value
             };
+            db.ref('posts').push(data).then(() => location.reload());
+        }
 
-            // Push to Firebase
-            db.ref('posts').push(newPost, (error) => {
-                if (error) {
-                    alert("Error: " + error.message);
-                } else {
-                    alert("🚀 Product Live on Feed!");
-                    window.location.href = "list.html"; // Redirect to list
-                }
+        db.ref('posts').on('value', snap => {
+            const cont = document.getElementById('items'); cont.innerHTML = "";
+            Object.entries(snap.val() || {}).forEach(([key, p]) => {
+                cont.innerHTML += `<div class="p-3 bg-gray-50 rounded-xl flex justify-between items-center text-sm border">
+                    <span>${p.productName} (₹${p.price})</span>
+                    <button onclick="del('${key}')" class="text-red-500 font-bold">Delete</button>
+                </div>`;
             });
         });
+        function del(k) { if(confirm('Delete?')) db.ref('posts/'+k).remove(); }
     </script>
 </body>
 </html>
