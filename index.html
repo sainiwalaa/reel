@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0" />
-    <title>Sainiwalaa | Official Reels Feed</title>
+    <title>Sainiwalaa Reels Feed</title>
     
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" rel="stylesheet" />
@@ -12,137 +12,129 @@
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body, html { 
             background: #000; height: 100vh; width: 100vw; 
-            overflow: hidden; color: #fff; 
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            overflow: hidden; color: #fff; font-family: sans-serif;
         }
+
         #reels-feed {
             height: 100vh; width: 100%;
             overflow-y: scroll; scroll-snap-type: y mandatory;
             scrollbar-width: none;
         }
         #reels-feed::-webkit-scrollbar { display: none; }
+
         .reel-card {
             height: 100vh; width: 100%; scroll-snap-align: start;
             position: relative; background: #000;
             display: flex; align-items: center; justify-content: center;
         }
+
         video { height: 100%; width: 100%; object-fit: cover; }
-        .top-badge {
+
+        /* UI Elements */
+        .top-info {
             position: absolute; top: 20px; left: 15px; z-index: 20;
-            background: rgba(0,0,0,0.5); backdrop-filter: blur(10px);
-            padding: 8px 15px; border-radius: 50px; border: 1px solid rgba(255,255,255,0.2);
-            display: flex; align-items: center; gap: 8px;
+            background: rgba(0,0,0,0.4); padding: 8px 15px; border-radius: 50px;
+            border: 1px solid rgba(255,255,255,0.2); font-size: 14px; font-weight: bold;
         }
-        .price-tag {
+
+        .price-badge {
             position: absolute; top: 35%; right: 15px;
-            background: linear-gradient(45deg, #ff416c, #ff4b2b);
-            padding: 10px 15px; border-radius: 8px; font-weight: 900;
-            transform: rotate(-8deg); z-index: 25;
+            background: #ff416c; color: white; padding: 8px 12px;
+            border-radius: 8px; font-weight: 900; transform: rotate(-8deg); z-index: 25;
         }
-        .info-box {
+
+        .bottom-info-box {
             position: absolute; bottom: 30px; left: 15px; right: 85px;
-            background: #0095f6; padding: 18px; border-radius: 20px; z-index: 30;
+            background: #0095f6; padding: 15px; border-radius: 15px; z-index: 30;
         }
-        .buy-btn {
+
+        .buy-now-btn {
             position: absolute; right: -65px; bottom: 0;
             background: #fff; color: #0095f6; width: 55px; height: 55px;
             border-radius: 50%; display: flex; align-items: center; justify-content: center;
-            font-size: 24px; box-shadow: 0 0 20px rgba(255,255,255,0.4); text-decoration: none;
+            font-size: 24px; box-shadow: 0 0 15px rgba(255,255,255,0.3); text-decoration: none;
         }
-        #start-overlay {
-            position: fixed; inset: 0; background: rgba(0,0,0,0.9);
-            z-index: 150; display: flex; align-items: center; justify-content: center;
-            cursor: pointer;
+
+        #tap-to-start {
+            position: fixed; inset: 0; background: rgba(0,0,0,0.8);
+            z-index: 100; display: flex; flex-direction: column; 
+            align-items: center; justify-content: center; cursor: pointer;
         }
     </style>
 </head>
 <body>
 
-    <div id="start-overlay" onclick="startApp()">
-        <div class="text-center">
-            <i class="fa-solid fa-circle-play text-7xl text-blue-500 mb-4 animate-bounce"></i>
-            <p class="font-bold tracking-widest">TAP TO WATCH REELS</p>
-        </div>
+    <div id="tap-to-start" onclick="startApp()">
+        <i class="fa-solid fa-play text-6xl text-blue-500 mb-4"></i>
+        <p class="font-bold tracking-widest">TAP TO WATCH REELS</p>
     </div>
 
     <div id="reels-feed"></div>
 
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-database-compat.js"></script>
 
     <script>
         const firebaseConfig = {
             apiKey: "AIzaSyCm-5fJ49MxP0MFT8dDIkptue15x_GaaYc",
-            authDomain: "sainiwalaainfulencer.firebaseapp.com",
-            projectId: "sainiwalaainfulencer",
-            storageBucket: "sainiwalaainfulencer.appspot.com"
+            databaseURL: "https://sainiwalaainfulencer-default-rtdb.firebaseio.com",
         };
         firebase.initializeApp(firebaseConfig);
-        const db = firebase.firestore(); // Firestore Use Kar Rahe Hain
+        const db = firebase.database();
 
         function startApp() {
-            document.getElementById('start-overlay').style.display = 'none';
+            document.getElementById('tap-to-start').style.display = 'none';
             fetchReels();
         }
 
         async function fetchReels() {
-            try {
-                // 'posts' aapke collection ka naam hai
-                const snapshot = await db.collection("posts").get();
-                const container = document.getElementById('reels-feed');
-                
-                let posts = [];
-                snapshot.forEach(doc => posts.push(doc.data()));
-                posts.sort(() => Math.random() - 0.5);
+            db.ref('posts').once('value').then(snap => {
+                const data = snap.val();
+                if(!data) return;
 
-                posts.forEach((post) => {
+                const posts = Object.values(data).sort(() => Math.random() - 0.5);
+                const container = document.getElementById('reels-feed');
+
+                posts.forEach(p => {
                     container.innerHTML += `
                         <div class="reel-card" onclick="toggleMute(this)">
-                            <div class="top-badge">
-                                <i class="fa-brands fa-instagram text-pink-500 text-xl"></i>
-                                <span class="font-bold text-sm">${post.influencerName || 'Sainiwalaa'}</span>
-                            </div>
-                            <div class="price-tag">
-                                <div class="text-[10px] opacity-80 uppercase">Sale Price</div>
-                                <div>₹${post.price}</div>
-                            </div>
-                            <video class="main-video" loop playsinline muted>
-                                <source src="${post.mediaUrl}" type="video/mp4" />
+                            <div class="top-info">👤 ${p.influencerName || 'Sainiwalaa'}</div>
+                            <div class="price-badge">₹${p.price}</div>
+                            
+                            <video class="rvid" loop playsinline muted>
+                                <source src="${p.mediaUrl}" type="video/mp4">
                             </video>
-                            <div class="info-box">
-                                <h2 class="font-bold text-lg uppercase tracking-tight">${post.productName}</h2>
-                                <p class="text-xs opacity-90 mt-1 line-clamp-2">${post.description}</p>
-                                <a href="${post.buyLink}" target="_blank" class="buy-btn" onclick="event.stopPropagation();">
-                                    <i class="fa-solid fa-cart-shopping"></i>
-                                </a>
+
+                            <div class="bottom-info-box">
+                                <h3 class="font-bold text-lg">${p.productName}</h3>
+                                <p class="text-xs opacity-90">${p.description}</p>
+                                <a href="${p.buyLink}" target="_blank" class="buy-now-btn" onclick="event.stopPropagation();">🛒</a>
                             </div>
                         </div>`;
                 });
                 initObserver();
-            } catch (err) {
-                alert("Firestore Error: " + err.message);
-            }
+            });
         }
 
         function initObserver() {
-            const observer = new IntersectionObserver((entries) => {
-                entries.forEach(entry => {
-                    const video = entry.target.querySelector('video');
-                    if (entry.isIntersecting) {
-                        video.muted = false;
-                        video.play().catch(() => {});
+            const obs = new IntersectionObserver(entries => {
+                entries.forEach(e => {
+                    const v = e.target.querySelector('video');
+                    if(e.isIntersecting) {
+                        v.muted = false; // ऑटो अनम्यूट
+                        v.play().catch(() => {});
                     } else {
-                        video.pause();
+                        v.pause();
                     }
                 });
-            }, { threshold: 0.6 });
-            document.querySelectorAll('.reel-card').forEach(card => observer.observe(card));
+            }, { threshold: 0.7 });
+            document.querySelectorAll('.reel-card').forEach(c => obs.observe(c));
         }
 
         function toggleMute(card) {
-            const video = card.querySelector('video');
-            video.muted = !video.muted;
-            if(video.paused) video.play();
+            const v = card.querySelector('video');
+            v.muted = !v.muted;
+            if(v.paused) v.play();
         }
     </script>
 </body>
