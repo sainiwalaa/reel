@@ -3,73 +3,83 @@
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0" />
-    <title>Sainiwalaa | Public Feed</title>
+    <title>Sainiwalaa | Reels</title>
     
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" rel="stylesheet" />
     
     <style>
-        * { margin: 0; padding: 0; box-sizing: border-box; }
+        * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
         body, html { 
             background: #000; height: 100vh; width: 100vw; 
-            overflow: hidden; color: #fff; font-family: sans-serif;
+            overflow: hidden; color: #fff; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
         }
 
+        /* Full Screen Feed */
         #reels-feed {
             height: 100vh; width: 100%;
             overflow-y: scroll; scroll-snap-type: y mandatory;
-            scrollbar-width: none;
+            scrollbar-width: none; -ms-overflow-style: none;
         }
         #reels-feed::-webkit-scrollbar { display: none; }
 
-        /* 9:16 Aspect Ratio Container */
         .reel-card {
             height: 100vh; width: 100%; scroll-snap-align: start;
             position: relative; background: #000;
             display: flex; align-items: center; justify-content: center;
         }
 
+        /* 9:16 Ratio Logic */
         video { 
             height: 100%; width: 100%; 
-            object-fit: cover; /* यह वीडियो को 9:16 में फिट करेगा */
+            object-fit: cover; /* असली रील जैसा फुल स्क्रीन */
         }
 
-        /* Side Action Buttons (Insta Look) */
-        .side-actions {
-            position: absolute; right: 15px; bottom: 120px;
-            display: flex; flex-direction: column; align-items: center; gap: 20px;
-            z-index: 40;
-        }
-        .action-btn { text-align: center; cursor: pointer; }
-        .action-btn i { font-size: 28px; text-shadow: 0 2px 10px rgba(0,0,0,0.5); }
-        .action-btn span { font-size: 12px; display: block; margin-top: 4px; font-weight: bold; }
-
-        /* Bottom Info (Insta Look) */
-        .bottom-details {
-            position: absolute; bottom: 30px; left: 15px; right: 80px;
-            z-index: 30; text-shadow: 0 1px 5px rgba(0,0,0,0.8);
-        }
-        .user-row { display: flex; align-items: center; gap: 10px; margin-bottom: 10px; }
-        .user-row img { width: 35px; height: 35px; border-radius: 50%; border: 2px solid #fff; }
-        
-        .product-name { font-weight: bold; font-size: 16px; margin-bottom: 5px; }
-        .description { font-size: 13px; opacity: 0.9; line-clamp: 2; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
-
-        /* Price Badge */
-        .insta-price {
-            background: #ff0050; color: #fff; padding: 5px 12px; border-radius: 4px;
-            font-weight: 900; font-size: 14px; display: inline-block; margin-bottom: 10px;
+        /* Gradient Overlay for Text Readability */
+        .bottom-gradient {
+            position: absolute; bottom: 0; left: 0; right: 0;
+            height: 30%;
+            background: linear-gradient(to top, rgba(0,0,0,0.8) 0%, transparent 100%);
+            z-index: 10; pointer-events: none;
         }
 
-        /* Shop Now Button */
-        .shop-now {
-            background: #fff; color: #000; padding: 10px 20px; border-radius: 8px;
-            font-weight: bold; text-decoration: none; display: inline-flex;
-            align-items: center; gap: 8px; font-size: 14px; margin-top: 10px;
+        /* User & Info Content */
+        .reel-content {
+            position: absolute; bottom: 20px; left: 16px; right: 16px;
+            z-index: 20;
         }
 
-        #tap-overlay {
-            position: fixed; inset: 0; background: rgba(0,0,0,0.9);
+        .user-info { display: flex; align-items: center; gap: 10px; margin-bottom: 12px; }
+        .user-info img { width: 32px; height: 32px; border-radius: 50%; border: 1.5px solid #fff; }
+        .username { font-weight: 600; font-size: 14px; color: #fff; }
+
+        .product-title { font-weight: 700; font-size: 16px; margin-bottom: 6px; display: block; }
+        .description { 
+            font-size: 13px; color: #efefef; line-height: 1.4;
+            max-width: 85%; margin-bottom: 15px;
+            display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;
+        }
+
+        /* Floating Price Tag */
+        .price-chip {
+            display: inline-flex; align-items: center;
+            background: rgba(255, 255, 255, 0.2); backdrop-filter: blur(10px);
+            padding: 4px 10px; border-radius: 6px; font-weight: 700; font-size: 14px;
+            margin-bottom: 12px; border: 1px solid rgba(255,255,255,0.2);
+        }
+
+        /* Action Link */
+        .shop-btn {
+            background: #fff; color: #000; width: 100%;
+            padding: 12px; border-radius: 8px; font-weight: 700;
+            text-align: center; text-decoration: none; display: block;
+            font-size: 14px; transition: opacity 0.2s;
+        }
+        .shop-btn:active { opacity: 0.8; }
+
+        /* Initial Tap Overlay */
+        #tap-start {
+            position: fixed; inset: 0; background: #000;
             z-index: 100; display: flex; flex-direction: column; 
             align-items: center; justify-content: center; cursor: pointer;
         }
@@ -77,9 +87,11 @@
 </head>
 <body>
 
-    <div id="tap-overlay" onclick="startApp()">
-        <i class="fa-solid fa-circle-play text-7xl text-pink-500 mb-4"></i>
-        <p class="font-bold tracking-widest text-lg">WATCH LATEST REELS</p>
+    <div id="tap-start" onclick="startApp()">
+        <div class="animate-pulse text-center">
+            <i class="fa-solid fa-play text-5xl mb-4"></i>
+            <p class="font-bold tracking-widest text-sm uppercase">Tap to Play Reels</p>
+        </div>
     </div>
 
     <div id="reels-feed"></div>
@@ -96,7 +108,7 @@
         const db = firebase.database();
 
         function startApp() {
-            document.getElementById('tap-overlay').style.display = 'none';
+            document.getElementById('tap-start').style.display = 'none';
             fetchReels();
         }
 
@@ -111,35 +123,25 @@
                 posts.forEach(p => {
                     container.innerHTML += `
                         <div class="reel-card" onclick="toggleMute(this)">
-                            <div class="side-actions">
-                                <div class="action-btn" onclick="event.stopPropagation();">
-                                    <i class="fa-solid fa-heart"></i>
-                                    <span>Like</span>
-                                </div>
-                                <div class="action-btn" onclick="shareWhatsApp('${p.productName}', '${p.buyLink}')">
-                                    <i class="fa-brands fa-whatsapp text-green-500"></i>
-                                    <span>Send</span>
-                                </div>
-                                <div class="action-btn">
-                                    <i class="fa-solid fa-share"></i>
-                                    <span>Share</span>
-                                </div>
-                            </div>
-
-                            <video class="rvid" loop playsinline muted>
+                            <video class="rvid" loop playsinline muted preload="auto">
                                 <source src="${p.mediaUrl}" type="video/mp4">
                             </video>
 
-                            <div class="bottom-details">
-                                <div class="insta-price">₹${p.price}</div>
-                                <div class="user-row">
+                            <div class="bottom-gradient"></div>
+
+                            <div class="reel-content">
+                                <div class="price-chip">₹${p.price}</div>
+                                
+                                <div class="user-info">
                                     <img src="https://ui-avatars.com/api/?name=${p.influencerName || 'S'}&background=random" alt="user">
-                                    <span class="font-bold">@${p.influencerInsta || 'sainiwalaa'}</span>
+                                    <span class="username">${p.influencerName || 'sainiwalaa'}</span>
                                 </div>
-                                <div class="product-name">${p.productName}</div>
-                                <p class="description">${p.description}</p>
-                                <a href="${p.buyLink}" target="_blank" class="shop-now" onclick="event.stopPropagation();">
-                                    <i class="fa-solid fa-cart-shopping"></i> SHOP NOW
+
+                                <h2 class="product-title">${p.productName}</h2>
+                                <p class="description">${p.description || ''}</p>
+
+                                <a href="${p.buyLink}" target="_blank" class="shop-btn" onclick="event.stopPropagation();">
+                                    SHOP NOW
                                 </a>
                             </div>
                         </div>`;
@@ -159,7 +161,7 @@
                         v.pause();
                     }
                 });
-            }, { threshold: 0.7 });
+            }, { threshold: 0.8 });
             document.querySelectorAll('.reel-card').forEach(c => obs.observe(c));
         }
 
@@ -167,12 +169,6 @@
             const v = card.querySelector('video');
             v.muted = !v.muted;
             if(v.paused) v.play();
-        }
-
-        function shareWhatsApp(name, link) {
-            event.stopPropagation();
-            const text = `Hey! Check out this ${name}: ${link}`;
-            window.open(`https://api.whatsapp.com/send?text=${encodeURIComponent(text)}`, '_blank');
         }
     </script>
 </body>
